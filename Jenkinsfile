@@ -3,7 +3,7 @@ pipeline {
         APP_NAME = "register-app-pipeline"
         RELEASE = "1.0.0"
         DOCKER_USER = "aishwarya0909"  // Docker username
-        DOCKER_PASS = credentials('dockerhub')  // Use the correct credential ID for Docker Hub credentials
+        DOCKER_PASS = credentials('dockerhub1')  // Use the correct credential ID for Docker Hub credentials
         IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
         IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
         JENKINS_API_TOKEN = credentials("JENKINS_API_TOKEN")
@@ -52,13 +52,13 @@ pipeline {
                     echo "DOCKER_USER: ${DOCKER_USER}"  // Debugging step to check Docker username
 
                     // Log in to Docker Hub using Docker credentials stored in Jenkins
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub1') {
                         // Build Docker image with the specific tag
                         docker_image = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
                     }
 
                     // Push the Docker image to Docker Hub registry
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub1') {
                         docker_image.push("${IMAGE_TAG}")  // Push image with the tag
                         docker_image.push('latest')  // Optionally, also push the 'latest' tag
                     }
