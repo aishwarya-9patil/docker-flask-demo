@@ -3,7 +3,7 @@ pipeline {
         APP_NAME = "register-app-pipeline"
         RELEASE = "1.0.0"
         DOCKER_USER = "aishwarya0909"  // Docker username
-        DOCKER_PASS = credentials('dockerhub1')  // Use the correct credential ID for Docker Hub credentials
+        DOCKER_PASS = credentials('dockerhub1')  // Correct Docker credential ID
         IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
         IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
         JENKINS_API_TOKEN = credentials("JENKINS_API_TOKEN")
@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage("Cleanup Workspace") {
             steps {
-                cleanWs()  // Cleanup workspace to ensure a fresh build
+                cleanWs()
             }
         }
 
@@ -24,7 +24,7 @@ pipeline {
 
         stage("Build Application") {
             steps {
-                sh "mvn clean package"  // This should use the Maven tool configured in Jenkins
+                sh "mvn clean package"
             }
         }
 
@@ -41,7 +41,7 @@ pipeline {
         stage("Quality Gate") {
             steps {
                 script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'jenkins-sonarqube-token'  // Wait for the quality gate to pass
+                    waitForQualityGate abortPipeline: false, credentialsId: 'jenkins-sonarqube-token'
                 }
             }
         }
@@ -49,27 +49,20 @@ pipeline {
         stage("Build & Push Docker Image") {
             steps {
                 script {
-                    echo "DOCKER_USER: ${DOCKER_USER}"  // Debugging step to check Docker username
+                    echo "DOCKER_USER: ${DOCKER_USER}"  // Debugging step
 
                     // Log in to Docker Hub using Docker credentials stored in Jenkins
                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub1') {
-                        // Build Docker image with the specific tag
                         docker_image = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
                     }
 
-                    // Push the Docker image to Docker Hub registry
+                    // Push the Docker image to Docker Hub
                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub1') {
-                        docker_image.push("${IMAGE_TAG}")  // Push image with the tag
-                        docker_image.push('latest')  // Optionally, also push the 'latest' tag
+                        docker_image.push("${IMAGE_TAG}")
+                        docker_image.push('latest')
                     }
                 }
             }
         }
-
-        // Additional stages can go here (e.g., Test, Deploy, etc.)
     }
 }
-
-   
-
-       
