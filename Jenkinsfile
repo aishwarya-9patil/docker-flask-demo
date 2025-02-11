@@ -1,40 +1,48 @@
+
 pipeline {
-    agent any 
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhubID')  // Jenkins credentials ID
+    agent { label 'Jenkins-Agent' }
+    tools {
+        jdk 'Java17'
+        maven 'Maven3'
     }
-    stages { 
-        stage('Build Docker Image') {
-            steps {  
-                script {
-                    // Tag the image with your Docker Hub username and build number
-                    def imageTag = "aishwarya0909/flaskapp:${BUILD_NUMBER}"
-                    sh "docker build -t ${imageTag} ."
-                }
+
+    stages {
+        stage("Cleanup Workspace") {
+            steps {
+                cleanWs()
             }
         }
-        stage('Login to Docker Hub') {
+
+        stage("Checkout from SCM") {
+            steps {
+                git branch: 'main', credentialsId: 'github', url: 'https://github.com/aishwarya-9patil/register-app-project1.git'
+            }
+        }
+
+        stage("Build Application") {
+            steps {
+                sh "mvn clean package"
+            }
+        }
+
+        stage("SonarQube Analysis") {
             steps {
                 script {
-                    // Login to Docker Hub using the credentials from Jenkins
-                    sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                    withSonarQubeEnv(credentialsId: 'jenkins-sonarqube-token') { 
+                        sh "mvn sonar:sonar"
+                    }
                 }
             }
         }
-        stage('Push Image to Docker Hub') {
+
+        stage("Quality Gate") {
             steps {
                 script {
-                    def imageTag = "aishwarya0909/flaskapp:${BUILD_NUMBER}"
-                    sh "docker push ${imageTag}"
+                    waitForQualityGate abortPipeline: false, credentialsId: 'jenkins-sonarqube-token'
                 }
             }
         }
-    }
-    post {
-        always {
-            // Ensure to logout of Docker Hub after the job is done
-            sh 'docker logout'
-        }
+
+        // Add any additional stages here (like Test, Deploy, etc.)
     }
 }
-
